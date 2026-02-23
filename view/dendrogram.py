@@ -92,6 +92,14 @@ def transform_vert(dd, n, nros):
 @profile
 def render(**args):
     poems, types, target_type, inner = None, None, None, None
+    
+    # START: Parameter validation for crawler protection. Passing invalid parameters will not cause an error and crash the pod, but will return an error message instead.
+    valid_sources = ('type', 'cluster', 'nros', 'collector', 'place')
+    if args.get('source') not in valid_sources:
+        return "Error: Missing or invalid 'source' parameter. " \
+               "Valid values: type, cluster, nros, collector, place"
+    # END: Parameter validation for crawler protection
+    
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         if args['source'] == 'type':
             target_type = Types(ids=[args['type_id']])

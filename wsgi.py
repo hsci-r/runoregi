@@ -56,9 +56,8 @@ def show_clustnet():
 
 @application.route('/dendrogram')
 def show_dendrogram():
-    args = getargs(request, view.dendrogram.DEFAULTS)
-    result = view.dendrogram.render(**args)
-    return _compact(result)
+    # Temporarily disabled - return 403 Forbidden
+    return "Access to dendrogram temporarily disabled", 403
 
 
 @application.route('/passage')

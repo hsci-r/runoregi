@@ -81,8 +81,13 @@ def get_verses(db, nro=None, start_pos=None, end_pos=None,
     elif (isinstance(clust_id, tuple) or isinstance(clust_id, list)) \
          and config.TABLES['v_clust'] and config.TABLES['v_clust_freq']:
         # get by cluster IDs
-        query_lst.append('WHERE vc.clust_id IN %s')
-        query_args.append(tuple(clust_id))
+        # Skip if cluster ID list is empty
+        if clust_id:
+            query_lst.append('WHERE vc.clust_id IN %s')
+            query_args.append(tuple(clust_id))
+        else:
+            # Empty cluster list - add a condition that always evaluates to false
+            query_lst.append('WHERE vc.clust_id IS NULL')
     else:
         raise Exception('TODO message')
 

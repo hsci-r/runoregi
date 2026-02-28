@@ -43,6 +43,9 @@ def generate_page_links(args):
 
 @profile
 def render(**args):
+    # Validate required parameters
+    if not args.get('nro1') or not args.get('nro2'):
+        return "Error: Missing required parameters 'nro1' and 'nro2'"
 
     # FIXME code duplication with poem.py!
     def _makecolcomp(value):

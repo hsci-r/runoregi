@@ -22,6 +22,9 @@ DEFAULTS = {
 
 @profile
 def render(**args):
+    # Validate required parameters
+    if not args.get('nro'):
+        return "Error: Missing required parameter 'nro'"
 
     def _group_by_source(verses):
         results = OrderedDict()

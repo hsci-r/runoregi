@@ -43,7 +43,7 @@ def getargs(request, defaults):
                                  and not isinstance(defval, list) \
                              else str
         result[key] = request.args.get(key, defval, dtype)
-        # Try to convert the values to integers, but only if possible.
+        # Handle list-type parameters (comma-separated)
         if isinstance(result[key], str) and isinstance(defval, list):
             result[key] = result[key].split(',')
             try:
@@ -76,7 +76,10 @@ def show_dendrogram():
         # Validate parameters before rendering
         if args.get('source') == 'type':
             type_id = args.get('type_id')
-            if type_id is None or not isinstance(type_id, int) or type_id > MAX_TYPE_ID:
+            # type_id can be either an integer or a string like 'skvr_t010100_0320'
+            if type_id is None:
+                return 'Invalid type_id parameter', 400
+            if isinstance(type_id, int) and type_id > MAX_TYPE_ID:
                 return 'Invalid type_id parameter', 400
         elif args.get('source') == 'cluster':
             nros = args.get('nro')

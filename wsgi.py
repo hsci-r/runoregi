@@ -1,7 +1,8 @@
-from flask import Flask, Response, redirect, request
+from flask import Flask, Response, redirect, render_template, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 import pymysql
 import re
+from traceback import format_exception
 
 import config
 from data.poems import get_poem_by_id_or_title
@@ -45,6 +46,15 @@ def getargs(request, defaults):
             except ValueError:
                 pass
     return result
+
+
+@application.errorhandler(Exception)
+def show_error(e):
+    data = {
+        'title': 'Unexpected error',
+        'msg': 'An unexpected error occurred.',
+    }
+    return render_template('error.html', data=data)
 
 
 @application.route('/clustnet')

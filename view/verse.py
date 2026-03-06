@@ -1,6 +1,8 @@
 from collections import defaultdict, OrderedDict
-from flask import render_template
+from flask import Response, render_template
 import pymysql
+from pydantic import BaseModel, Field
+from typing import Literal
 from urllib.parse import urlencode
 
 import config
@@ -8,20 +10,20 @@ from data.logging import profile
 from data.poems import Poems
 from data.verses import \
     get_clusterings, get_verses, get_verse_cluster_neighbors
-from utils import print_type_list, render_csv
+from utils import compact, print_type_list, render_csv
 
 
-DEFAULTS = {
-  'format': 'html',
-  'nro': None,
-  'pos': 0,
-  'v_id': 0,
-  'clustering': 0
-}
+class Args(BaseModel):
+    nro: str = Field(max_length=16)
+    pos: int = Field(ge=1, le=10000)
+    clustering: int = 0
+    format: Literal["html", "csv", "tsv"] = "html"
 
 
 @profile
-def render(**args):
+def render(**kwargs):
+
+    args = Args.model_validate(kwargs)
 
     def _group_by_source(verses):
         results = OrderedDict()
@@ -43,11 +45,11 @@ def render(**args):
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         # the target verse (with nro and pos specified in args)
         verse = get_verses(
-            db, nro=args['nro'], start_pos=args['pos'],
-            end_pos=args['pos'], clustering_id=args['clustering'])[0]
+            db, nro=args.nro, start_pos=args.pos,
+            end_pos=args.pos, clustering_id=args.clustering)[0]
         # verse cluster
         verses = get_verses(db, clust_id=(verse.clust_id,),
-                            clustering_id=args['clustering'])
+                            clustering_id=args.clustering)
         verses_by_src = _group_by_source(verses)
         # poem metadata
         poems = Poems(nros=list(verses_by_src.keys()))
@@ -57,14 +59,14 @@ def render(**args):
         types.get_names(db)
         # neighboring clusters
         verses_nbclust = get_verse_cluster_neighbors(
-            db, (verse.clust_id,), clustering_id=args['clustering'])
+            db, (verse.clust_id,), clustering_id=args.clustering)
         # clusterings
         clusterings = get_clusterings(db)
 
     nbclust = _group_nbclust(verses_nbclust, verses)
 
-    if args['format'] in ('csv', 'tsv'):
-        return render_csv([
+    if args.format in ('csv', 'tsv'):
+        page = render_csv([
             (v.nro, v.pos, v.text_norm,
              ';'.join(p.parish_id if p.parish_id is not None else p.county_id \
                       for p in poems[v.nro].smd.place_lst),
@@ -76,7 +78,8 @@ def render(**args):
             for v in verses],
             header=('nro', 'pos', 'text', 'place_id', 'place',
                     'collector_id', 'collector', 'type_id', 'types'),
-            delimiter='\t' if args['format'] == 'tsv' else ',')
+            delimiter='\t' if args.format == 'tsv' else ',')
+        return Response(compact(page), mimetype='text/plain')
     else:
         data = {
             'verse': verse,
@@ -87,8 +90,8 @@ def render(**args):
             'clusterings': clusterings,
             'maintenance': config.check_maintenance()
         }
-        map_args = { 'nro': args['nro'], 'pos': args['pos'],
-                     'clustering': args['clustering'] }
+        map_args = { 'nro': args.nro, 'pos': args.pos,
+                     'clustering': args.clustering }
         links = {
             'map': config.VISUALIZATIONS_URL + '/?vis=map_cluster&' \
                    + urlencode(map_args) \
@@ -97,5 +100,6 @@ def render(**args):
                      + urlencode(dict(map_args, incl_erab_orig=False)) \
                      if config.VISUALIZATIONS_URL else None
         }
-        return render_template('verse.html', args=args, data=data, links=links)
+        page = render_template('verse.html', args=args, data=data, links=links)
+        return Response(compact(page))
 

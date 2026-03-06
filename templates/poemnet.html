@@ -24,13 +24,13 @@ function properly.
 <h1>Poem network</h1>
 
 <ul class="nav nav-pills">
-  <li role="presentation"><a role="button" href="/{% if args['nro'] | length > 1 %}multidiff{% else %}poem{% endif %}?nro={{ args['nro'] | join(',') }}">
-   <span class="glyphicon glyphicon-chevron-left"></span> Back to {% if args['nro'] | length > 1 %}alignment{% else %}poem{% endif %}
+  <li role="presentation"><a role="button" href="/{% if args.nro | length > 1 %}multidiff{% else %}poem{% endif %}?nro={{ args.nro | join(',') }}">
+   <span class="glyphicon glyphicon-chevron-left"></span> Back to {% if args.nro | length > 1 %}alignment{% else %}poem{% endif %}
   </a></li>
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Max. depth: {{ args['maxdepth'] }} <span class="caret"></span>
+      Max. depth: {{ args.maxdepth }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['maxdepth'] %}
@@ -41,7 +41,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Max. nodes: {{ args['maxnodes'] }} <span class="caret"></span>
+      Max. nodes: {{ args.maxnodes }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['maxnodes'] %}
@@ -52,7 +52,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Threshold: {{ args['t'] }} <span class="caret"></span>
+      Threshold: {{ args.t }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['t'] %}
@@ -73,7 +73,7 @@ function properly.
                    {% for line in p.type_tree %}
 				   + "\n{{ line.prefix | join('\u2003') }} {% if line['is_minor']%}*{% endif %}{{ data['types'][line.type_id].name }}"
                    {% endfor %},
-            shape: "box", {% if p.nro in args['nro'] %}color: "#FFEEAA",{% endif %}
+            shape: "box", {% if p.nro in args.nro %}color: "#FFEEAA",{% endif %}
             link: "/poem?nro={{ p.nro }}"},
         {% endfor %}
       ]);

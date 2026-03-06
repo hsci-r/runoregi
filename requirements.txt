@@ -3,5 +3,6 @@ gunicorn
 lxml
 numpy
 scipy
+pydantic
 pymysql
 git+https://github.com/hsci-r/shortsim

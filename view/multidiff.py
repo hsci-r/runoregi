@@ -1,8 +1,10 @@
-from flask import render_template
+from flask import render_template, Response
 import numpy as np
 from operator import itemgetter
+from pydantic import BaseModel, BeforeValidator, Field
 import pymysql
 import scipy.cluster.hierarchy
+from typing import Annotated, List, Literal
 
 from shortsim.align import align
 
@@ -11,22 +13,25 @@ from data.logging import profile
 from data.poems import Poems
 from methods.verse_sim import compute_verse_similarity
 from methods.hclust import make_sim_mtx, sim_to_dist
-from utils import link, render_csv, remove_xml
+from utils import compact, link, render_csv, remove_xml, splitter
 
 
-DEFAULTS = {
-  'nro': [],
-  'method': 'none',
-  't': 0.75,
-  'format': 'html'
-}
+MAX_POEMS = 50
+
+
+class Args(BaseModel):
+    nro: Annotated[
+        List[str],
+        BeforeValidator(splitter(',')),
+    ] = Field(max_length=MAX_POEMS)
+    method: Literal["none", "complete", "average", "single"] = "none"
+    t: float = Field(0.75, ge=0, le=1)
+    format: Literal["html", "csv"] = "html"
 
 
 def generate_page_links(args):
-    global DEFAULTS
-
     def pagelink(**kwargs):
-        return link('multidiff', dict(args, **kwargs), DEFAULTS)
+        return link('multidiff', args.model_copy(update=kwargs))
 
     result = {
         'csv': pagelink(format='csv'),
@@ -79,8 +84,9 @@ def merge_alignments(poems, merges, v_sims):
 
 
 @profile
-def render(**args):
-    poems = Poems(nros=args['nro'])
+def render(**kwargs):
+    args = Args.validate(kwargs)
+    poems = Poems(nros=args.nro)
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         poems.get_raw_meta(db)
         poems.get_structured_metadata(db)
@@ -92,9 +98,9 @@ def render(**args):
     m = make_sim_mtx(poems)
     m_onesided = make_sim_mtx(poems, onesided=True)
     d = sim_to_dist(m)
-    v_sims = compute_verse_similarity(poems, args['t'])
+    v_sims = compute_verse_similarity(poems, args.t)
     clust, ids = None, None
-    if args['method'] == 'none':
+    if args.method == 'none':
         # align the poems from left to right, in the order given by `nros`
         clust = np.zeros(shape=(len(poems)-1, 2))
         for i in range(len(poems)-1):
@@ -103,12 +109,12 @@ def render(**args):
         ids = list(range(len(poems)))
     else:
         # arrange the poems using hierarchical clustering
-        clust = scipy.cluster.hierarchy.linkage(d, method=args['method'])
+        clust = scipy.cluster.hierarchy.linkage(d, method=args.method)
         ids = scipy.cluster.hierarchy.leaves_list(clust) 
 
     als = merge_alignments(poems, clust[:,:2], v_sims)
 
-    poems = [poems[args['nro'][i]] for i in ids]
+    poems = [poems[args.nro[i]] for i in ids]
     meta_keys = sorted(set([k for p in poems for k in p.meta.keys()]))
     meta = {}
     for p in poems:
@@ -116,10 +122,11 @@ def render(**args):
         for key in meta_keys:
             if key in p.meta:
                 meta[p.nro][key] = remove_xml(p.meta[key], tag=key)
-    if args['format'] in ('csv', 'tsv'):
+    if args.format in ('csv', 'tsv'):
         rows = [((v.text if v else '') for v in row) for row in als]
-        return render_csv(rows, header=tuple(p.nro for p in poems),
-                          delimiter='\t' if args['format'] == 'tsv' else ',')
+        page = render_csv(rows, header=tuple(p.nro for p in poems),
+                          delimiter='\t' if args.format == 'tsv' else ',')
+        return Response(compact(page), mimetype="text/plain")
     else:
         data = {
             'alignment': als, 'poems': poems, 'meta_keys': meta_keys,
@@ -127,5 +134,5 @@ def render(**args):
             'v_sims': v_sims, 'maintenance': config.check_maintenance()
         }
         links = generate_page_links(args)
-        return render_template('multidiff.html', args=args, data=data, links=links)
-
+        page = render_template('multidiff.html', args=args, data=data, links=links)
+        return Response(compact(page))

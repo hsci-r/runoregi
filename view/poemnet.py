@@ -1,29 +1,34 @@
-from flask import render_template
+from flask import render_template, Response
 from operator import itemgetter
+from pydantic import BaseModel, BeforeValidator, Field
 import pymysql
+from typing import Annotated, List
 
 import config
 from data.logging import profile
 from data.poems import Poems
-from utils import link
+from utils import compact, link, splitter
 
 
-DEFAULTS = {
-  'nro': [],
-  'maxdepth': 1,
-  'maxnodes': 20,
-  't': 0.1,
-}
+MAX_POEMS=10
+
+
+class Args(BaseModel):
+    nro: Annotated[
+        List[str],
+        BeforeValidator(splitter(',')),
+    ] = Field(max_length=MAX_POEMS)
+    maxdepth: int = Field(1, ge=1, le=5)
+    maxnodes: int = Field(20, ge=1, le=200)
+    t: float = Field(0.1, ge=0, le=1)
 
 
 def generate_page_links(args):
-    global DEFAULTS
-
     def pagelink(**kwargs):
-        return link('poemnet', dict(args, **kwargs), DEFAULTS)
+        return link('poemnet', args.model_copy(update=kwargs))
 
     result = { 'maxdepth': {}, 'maxnodes': {}, 't': {} }
-    for val in [1, 2, 3, 4, 5, 6]:
+    for val in [1, 2, 3, 4, 5]:
         result['maxdepth'][val] = pagelink(maxdepth=val)
     for val in [10, 20, 30, 50, 70, 100, 150, 200]:
         result['maxnodes'][val] = pagelink(maxnodes=val)
@@ -65,18 +70,19 @@ def get_poem_network(db, poems, t=0.1, maxdepth=3, maxnodes=30):
 
 
 @profile
-def render(**args):
+def render(**kwargs):
+    args = Args.validate(kwargs)
     poemnet, smd = None, None
-    poems = Poems(nros=args['nro'])
+    poems = Poems(nros=args.nro)
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         poemnet = get_poem_network(
-            db, poems, t=args['t'],
-            maxdepth=args['maxdepth'], maxnodes=args['maxnodes'])
+            db, poems, t=args.t,
+            maxdepth=args.maxdepth, maxnodes=args.maxnodes)
         poemnet['nodes'].get_structured_metadata(db)
         types = poemnet['nodes'].get_types(db)
         types.get_names(db)
     links = generate_page_links(args)
     data = { 'poemnet': poemnet, 'types': types,
              'maintenance': config.check_maintenance() }
-    return render_template('poemnet.html', args=args, data=data, links=links)
-
+    page = render_template('poemnet.html', args=args, data=data, links=links)
+    return Response(compact(page))

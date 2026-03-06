@@ -24,13 +24,13 @@ function properly.
 <h1><small>#{{ data['verse'].clust_id }}</small> {{ data['verse'].text_norm }}</h1>
 
 <ul class="nav nav-pills">
-  <li role="presentation"><a role="button" href="/verse?nro={{ args['nro'] }}&pos={{ args['pos'] }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}">
+  <li role="presentation"><a role="button" href="/verse?nro={{ args.nro }}&pos={{ args.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}">
    <span class="glyphicon glyphicon-chevron-left"></span> Back to cluster
   </a></li>
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Max. depth: {{ args['maxdepth'] }} <span class="caret"></span>
+      Max. depth: {{ args.maxdepth }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['maxdepth'] %}
@@ -41,7 +41,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Max. nodes: {{ args['maxnodes'] }} <span class="caret"></span>
+      Max. nodes: {{ args.maxnodes }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['maxnodes'] %}
@@ -50,11 +50,11 @@ function properly.
    </ul>
   </li>
   <li role="presentation"><a role="button" href="{{ links['*physics'] }}">
-   <span class="glyphicon glyphicon-cog"></span> {% if args['nophysics'] %}Enable{% else %}Disable{% endif %} physics
+   <span class="glyphicon glyphicon-cog"></span> {% if args.nophysics %}Enable{% else %}Disable{% endif %} physics
   </a></li>
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-      Clustering: {{ data['clusterings'][args['clustering']][1] }} <span class="caret"></span>
+      Clustering: {{ data['clusterings'][args.clustering][1] }} <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
     {% for val in links['clustering'] %}
@@ -71,11 +71,11 @@ function properly.
         { id: {{ data['verse'].clust_id }},
           label: "#{{ data['verse'].clust_id }} " + {{ data['verse'].text_norm | tojson }},
           shape: "box" , color: "#FFEEAA", title: "{{ data['verse'].clust_freq }} verses",
-          link: "/verse?nro={{ args['nro'] }}&pos={{ args['pos'] }}"},
+          link: "/verse?nro={{ args.nro }}&pos={{ args.pos }}"},
         {% for n in data['clustnet']['nodes'] %}
           { id: {{ n.clust_id }}, label: "#{{ n.clust_id }} " + {{ n.text_norm | tojson }}, shape: "box",
             title: "{{ n.clust_freq }} verses",
-            link: "/verse?nro={{ n.nro }}&pos={{ n.pos }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}"},
+            link: "/verse?nro={{ n.nro }}&pos={{ n.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}"},
         {% endfor %}
       ]);
 
@@ -92,7 +92,7 @@ function properly.
         nodes: nodes,
         edges: edges,
       };
-      var options = { physics: { enabled: {% if args['nophysics'] %}false{% else %}true{% endif %} }}
+      var options = { physics: { enabled: {% if args.nophysics %}false{% else %}true{% endif %} }}
       var network = new vis.Network(container, data, options);
       network.on("doubleClick", function (params) {
         for (n of nodes.get(params.nodes)) {

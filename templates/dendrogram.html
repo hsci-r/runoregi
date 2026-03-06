@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>{% if args['source'] == "type" %}{{ data['target_type'][args['type_id']].name }}{% else %}Dendrogram{% endif %} — Runoregi</title>
+<title>{% if args.source == "type" %}{{ data['target_type'][args.type_id].name }}{% else %}Dendrogram{% endif %} — Runoregi</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="./static/css/bootstrap.min.css">
 <link rel="stylesheet" href="./static/css/style.css">
@@ -23,20 +23,20 @@ function properly.
   <li role="presentation"><a role="button" href="/" title="to index">
    <span class="glyphicon glyphicon-home"></span>
   </a></li>
-  {% if args['source'] == "cluster" %}
-  <li role="presentation"><a role="button" href="/poem?nro={{ args['nro'][0] }}">
+  {% if args.source == "cluster" %}
+  <li role="presentation"><a role="button" href="/poem?nro={{ args.nro }}">
    <span class="glyphicon glyphicon-chevron-left"></span>
    Back to poem
   </a></li>
-  {% elif args['source'] == "type" %}
-    {% for type_id in data['target_type'][args['type_id']].ancestors | reverse %}
+  {% elif args.source == "type" %}
+    {% for type_id in data['target_type'][args.type_id].ancestors | reverse %}
   <li role="presentation"><a role="button" href="/poemlist?source=type&id={{ type_id }}">
    <span class="glyphicon glyphicon-chevron-right"></span>
    {{ data['target_type'][type_id].name }}
   </a></li>
     {% endfor %}
-  {% elif args['source'] in ("place", "collector") %}
-  <li role="presentation"><a role="button" href="/poemlist?source={{ args['source'] }}&id={{ args['id'] }}">
+  {% elif args.source in ("place", "collector") %}
+  <li role="presentation"><a role="button" href="/poemlist?source={{ args.source }}&id={{ args.id }}">
    <span class="glyphicon glyphicon-chevron-left"></span>
    Back to list
   </a></li>
@@ -46,8 +46,8 @@ function properly.
 {% if data['title'] %}
 <h1 style="margin-left: 20px;">{{ data['title'] }}</h1>
 {% endif %}
-{% if args['source'] == "type" %}
-<p style="margin-left: 20px;">{{ data['target_type'][args['type_id']].description | safe }}</p>
+{% if args.source == "type" %}
+<p style="margin-left: 20px;">{{ data['target_type'][args.type_id].description | safe }}</p>
 <ul class="nav nav-pills">
 {% endif %}
 
@@ -55,7 +55,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Linking method: {{ args['method'] }} <span class="caret"></span>
+      Linking method: {{ args.method }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['method'] %}
@@ -66,7 +66,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Neighborhood: {% if args['nb'] == 1 %}none{% else %}{{ args['nb'] }}{% endif %}
+      Neighborhood: {% if args.nb == 1 %}none{% else %}{{ args.nb }}{% endif %}
       <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
@@ -75,7 +75,7 @@ function properly.
     {% endfor %}
    </ul>
   </li>
-  {% if args['source'] != "nros" and args['nb'] == 1 %}
+  {% if args.source != "nros" and args.nb == 1 %}
     {% if links['map'] %}
     <li role="presentation"><a role="button" target="_blank" href="{{ links['map'] }}">
      <span class="glyphicon glyphicon-picture"></span> Map
@@ -84,7 +84,7 @@ function properly.
     {% if links['types'] %}
     <li role="presentation"><a role="button" target="_blank" href="{{ links['types'] }}">
      <span class="glyphicon glyphicon-th"></span>
-     {% if args['source'] == "type" %}Co-occurring types{% else %}Type distribution{% endif %}
+     {% if args.source == "type" %}Co-occurring types{% else %}Type distribution{% endif %}
     </a></li>
     {% endif %}
   {% endif %}

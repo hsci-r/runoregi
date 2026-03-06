@@ -1,34 +1,32 @@
 from collections import defaultdict
-from flask import render_template
+from flask import render_template, Response
+from pydantic import BaseModel, Field
 import pymysql
 
 import config
 from data.logging import profile
 from data.verses import \
     get_clusterings, get_verses, get_verse_cluster_neighbors
-from utils import link
+from utils import compact, link
 
 
-DEFAULTS = {
-  'nro': None,
-  'pos': None,
-  'v_id': None,
-  'clustering': 0,
-  'maxdepth': 1,
-  'maxnodes': 20,
-  'nophysics': False
-}
+class Args(BaseModel):
+    nro: str
+    pos: int
+    clustering: int = 0
+    maxdepth: int = Field(1, ge=1, le=5)
+    maxnodes: int = Field(20, ge=1, le=200)
+    nophysics: bool = False
 
 
 def generate_page_links(args, clusterings):
-    global DEFAULTS
 
     def pagelink(**kwargs):
-        return link('clustnet', dict(args, **kwargs), DEFAULTS)
+        return link('clustnet', args.model_copy(update=kwargs))
 
-    result = { '*physics': pagelink(nophysics=not args['nophysics']),
+    result = { '*physics': pagelink(nophysics=not args.nophysics),
                'maxdepth': {}, 'maxnodes': {}, 'clustering': {} }
-    for val in [1, 2, 3, 4, 5, 6]:
+    for val in [1, 2, 3, 4, 5]:
         result['maxdepth'][val] = pagelink(maxdepth=val)
     for val in [10, 20, 30, 50, 70, 100, 150, 200]:
         result['maxnodes'][val] = pagelink(maxnodes=val)
@@ -59,17 +57,18 @@ def get_cluster_network(db, clust_id, clustering_id=0, maxdepth=3, maxnodes=30):
 
 
 @profile
-def render(**args):
+def render(**kwargs):
+    args = Args.validate(kwargs)
     clustnet, clusterings, verse = None, None, None
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         verse = get_verses(
-            db, nro=args['nro'], start_pos=args['pos'],
-            end_pos=args['pos'], clustering_id=args['clustering'])[0]
+            db, nro=args.nro, start_pos=args.pos,
+            end_pos=args.pos, clustering_id=args.clustering)[0]
         clusterings = get_clusterings(db)
         clustnet = get_cluster_network(db, verse.clust_id,
-                                       clustering_id=args['clustering'],
-                                       maxdepth=args['maxdepth'],
-                                       maxnodes=args['maxnodes'])
+                                       clustering_id=args.clustering,
+                                       maxdepth=args.maxdepth,
+                                       maxnodes=args.maxnodes)
     data = {
         'verse': verse,
         'clustnet': clustnet,

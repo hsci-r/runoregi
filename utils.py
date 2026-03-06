@@ -5,12 +5,21 @@ from operator import itemgetter
 import re
 
 
+def compact(string):
+    'Remove empty lines from the HTML code.'
+    return re.sub(r'\n(\s*\n)+', '\n', string)
+
+
+def splitter(sep):
+    return lambda x: x.split(sep)
+
+
 def clean_special_chars(text):
     text = re.sub('[@$^_\xb0\xa8\u02c7\u20ac\u2020]', '', text)
     return text
 
 
-def link(view, args, defaults):
+def link(view, args):
     'Generates a link to a certain view with specified option settings.'
 
     def _str(value):
@@ -21,9 +30,15 @@ def link(view, args, defaults):
         else:
             return str(value)
 
+    # get a dictionary of all non-default values specified for this link
+    values = {
+        key: _str(val)
+        for key, val in args.model_dump().items()
+        if val != args.model_fields[key].default
+    }
+
     link = '/{}?'.format(view) + \
-        '&'.join('{}={}'.format(key, _str(args[key]))
-        for key in args if args[key] != defaults[key])
+        '&'.join('{}={}'.format(key, val) for key, val in values.items())
     return link
 
 

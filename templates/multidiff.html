@@ -47,13 +47,13 @@ function properly.
     <li role="presentation"><a href="{{ links['tsv'] }}">TSV</a></li>
     </ul>
   </li>
-  <li role="presentation"><a role="button" href="/poemnet?nro={{ args['nro'] | join(',') }}">
+  <li role="presentation"><a role="button" href="/poemnet?nro={{ args.nro | join(',') }}">
    <span class="glyphicon glyphicon-cloud"></span> Network view
   </a></li>
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Linking method: {{ args['method'] }} <span class="caret"></span>
+      Linking method: {{ args.method }} <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
     {% for val in links['method'] %}
@@ -64,7 +64,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
       <span class="glyphicon glyphicon-cog"></span>
-      Threshold: {{ args['t'] }}
+      Threshold: {{ args.t }}
       <span class="caret"></span>
     </a>
    <ul class="dropdown-menu">
@@ -158,12 +158,12 @@ function properly.
 <tr>
 <td><b>symmetric similarity</b></td>
 {% for j in range(data['m'].shape[1]) %}
-<td>{{ args['nro'][j] }}</td>
+<td>{{ args.nro[j] }}</td>
 {% endfor %}
 </tr>
 {% for i in range(data['m'].shape[0]) %}
 <tr>
-<td>{{ args['nro'][i] }}</td>
+<td>{{ args.nro[i] }}</td>
 {% for j in range(data['m'].shape[1]) %}
 <td>{% if data['m'][i,j] > 0 %}{{ (data['m'][i,j]*100) | int }}%{% endif %}</td>
 {% endfor %}
@@ -174,12 +174,12 @@ function properly.
 <tr>
 <td><b>one-sided similarity</b></td>
 {% for j in range(data['m'].shape[1]) %}
-<td>{{ args['nro'][j] }}</td>
+<td>{{ args.nro[j] }}</td>
 {% endfor %}
 </tr><br><br>
 {% for i in range(data['m'].shape[0]) %}
 <tr>
-<td>{{ args['nro'][i] }}</td>
+<td>{{ args.nro[i] }}</td>
 {% for j in range(data['m'].shape[1]) %}
 <td>{% if data['m_onesided'][i,j] > 0 %}{{ (data['m_onesided'][i,j]*100) | int }}%{% endif %}</td>
 {% endfor %}
@@ -219,7 +219,7 @@ function add_highlight(node) {
   document.querySelectorAll("[data-v_id]").forEach(n => {
     v_id_2 = n.getAttribute("data-v_id");
     if (v_id_2 in v_sims[v_id]) {
-      s = 0.2 + 0.8*(v_sims[v_id][v_id_2]-{{ args['t'] }}) / (1-{{ args['t'] }});
+      s = 0.2 + 0.8*(v_sims[v_id][v_id_2]-{{ args.t }}) / (1-{{ args.t }});
       n.style.backgroundColor = "rgba(255, 192, 21, " + s  + ")";
       n.style.padding = "2px";
       n.style.borderRadius = "3px";

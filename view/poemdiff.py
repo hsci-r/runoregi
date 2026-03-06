@@ -1,8 +1,10 @@
 from collections import defaultdict
-from flask import render_template
+from flask import render_template, Response
+from pydantic import BaseModel, Field
 import pymysql
 import re
 from subprocess import Popen, PIPE
+from typing import Literal
 
 from shortsim.align import align
 
@@ -10,15 +12,15 @@ import config
 from data.logging import profile
 from data.poems import Poems
 from methods.verse_sim import compute_verse_similarity
-from utils import link, makecol, render_csv, remove_xml
+from utils import compact, link, makecol, render_csv, remove_xml
 
 
-DEFAULTS = {
-  'nro1': None,
-  'nro2': None,
-  't': 0.75,
-  'format': 'html'
-}
+class Args(BaseModel):
+  nro1: str = Field(max_length=16)
+  nro2: str = Field(max_length=16)
+  t: float = Field(0.75, ge=0, le=1)
+  format: Literal["html", "csv", "tsv"] = "html"
+
 
 COLOR_NORMAL = None
 COLOR_CHARDIFF = 'blue'
@@ -26,10 +28,8 @@ COLOR_LINEDIFF = 'grey'
 
 
 def generate_page_links(args):
-    global DEFAULTS
-
     def pagelink(**kwargs):
-        return link('poemdiff', dict(args, **kwargs), DEFAULTS)
+        return link('poemdiff', args.model_copy(update=kwargs))
 
     result = {
         'csv': pagelink(format='csv'),
@@ -42,7 +42,8 @@ def generate_page_links(args):
 
 
 @profile
-def render(**args):
+def render(**kwargs):
+    args = Args.validate(kwargs)
 
     # FIXME code duplication with poem.py!
     def _makecolcomp(value):
@@ -61,7 +62,7 @@ def render(**args):
     # TODO
     # - some refactoring
     # - bold for captions
-    poems = Poems(nros=[args['nro1'], args['nro2']])
+    poems = Poems(nros=[args.nro1, args.nro2])
     with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
         poems.get_raw_meta(db)
         poems.get_structured_metadata(db)
@@ -69,11 +70,11 @@ def render(**args):
         types = poems.get_types(db)
         types.get_names(db)
 
-    poem_1 = poems[args['nro1']]
-    poem_2 = poems[args['nro2']]
+    poem_1 = poems[args.nro1]
+    poem_2 = poems[args.nro2]
     poem_1_text = [v for v in poem_1.text if v.v_type == 'V']
     poem_2_text = [v for v in poem_2.text if v.v_type == 'V']
-    sims = compute_verse_similarity(poems, args['t'])
+    sims = compute_verse_similarity(poems, args.t)
     al = align(
         poem_1_text,
         poem_2_text,
@@ -83,12 +84,13 @@ def render(**args):
           if poem_2_text[j].v_id in sims[poem_1_text[i].v_id] else 0,
         opt_fun=max,
         empty=None)
-    if args['format'] in ('csv', 'tsv'):
-        return render_csv([(x.text_norm if x is not None else None,
+    if args.format in ('csv', 'tsv'):
+        page = render_csv([(x.text_norm if x is not None else None,
                             y.text_norm if y is not None else None,
                             w) for x, y, w in al],
-                          header=(args['nro1'], args['nro2'], 'sim_cos'),
-                          delimiter='\t' if args['format'] == 'tsv' else ',')
+                          header=(args.nro1, args.nro2, 'sim_cos'),
+                          delimiter='\t' if args.format == 'tsv' else ',')
+        return Response(compact(page), mimetype="text/plain")
 
     # render HTML
     meta_keys = sorted(list(set(poem_1.meta.keys()) | set(poem_2.meta.keys())))
@@ -141,5 +143,5 @@ def render(**args):
         'alignment': alignment, 'scores': scores, 'types': types,
         'maintenance': config.check_maintenance()
     }
-    return render_template('poemdiff.html', args=args, data=data, links=links)
-
+    page = render_template('poemdiff.html', args=args, data=data, links=links)
+    return Response(compact(page))

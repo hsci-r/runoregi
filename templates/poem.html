@@ -141,7 +141,7 @@ function properly.
     </ul>
     <li role="presentation" class="dropdown">
       <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-        Clustering: {{ data['clusterings'][args['clustering']][1] }} <span class="caret"></span>
+        Clustering: {{ data['clusterings'][args.clustering][1] }} <span class="caret"></span>
       </a>
       <ul class="dropdown-menu">
       {% for c in data['clusterings'] %}
@@ -149,7 +149,7 @@ function properly.
       {% endfor %}
       </ul>
     </li>
-  {% if args['show_shared_verses'] %}
+  {% if args.show_shared_verses %}
   <li role="presentation"><a role="button" href="{{ links['-show_shared_verses'] }}" title="to index">
    <span class="glyphicon glyphicon-cog"></span>
    Hide shared verses matrix
@@ -168,7 +168,7 @@ function properly.
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
    <span class="glyphicon glyphicon-cog"></span>
-      Weighting: {{ args['sim_order'] }} <span class="caret"></span>
+      Weighting: {{ args.sim_order }} <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
     {% for val in links['sim_order'] %}
@@ -189,34 +189,34 @@ function properly.
   {% for v in data['poem'].text %}
   <tr>
     {% if v.v_type == "V" %}
-      <td{%if args['show_shared_verses'] %} class="poem-view-freqbar"{% endif %} bgcolor="{{ data['colors'][v.clust_freq] }}">
-        <a name="{{ v.pos }}" href="/verse?nro={{ data['poem'].nro }}&pos={{ v.pos }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}" title="{{ v.clust_freq }}" class="cn">&nbsp;&nbsp;&nbsp;
+      <td{%if args.show_shared_verses %} class="poem-view-freqbar"{% endif %} bgcolor="{{ data['colors'][v.clust_freq] }}">
+        <a name="{{ v.pos }}" href="/verse?nro={{ data['poem'].nro }}&pos={{ v.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}" title="{{ v.clust_freq }}" class="cn">&nbsp;&nbsp;&nbsp;
         </a>
       </td>
-      <td align="right" class="verse_id{%if args['show_shared_verses'] %} poem-view-linenumber{% endif %}" id="{{ v.pos }}">&ensp;<sup><small>{{ v.pos }}&ensp;</small></sup></td>
-      <td{%if args['show_shared_verses'] %}  class="poem-view-text"{% endif %}>
-      {% if v.pos in args['hl'] %}
+      <td align="right" class="verse_id{%if args.show_shared_verses %} poem-view-linenumber{% endif %}" id="{{ v.pos }}">&ensp;<sup><small>{{ v.pos }}&ensp;</small></sup></td>
+      <td{%if args.show_shared_verses %}  class="poem-view-text"{% endif %}>
+      {% if v.pos in args.hl %}
         <b>{{ v.text_rendered | safe }}</b>
       {% else %}
         {{ v.text_rendered | safe }}
       {% endif %}</td>
     {% else %}
       {% if v.v_type == "L" %}
-      <td></td><td></td><td{%if args['show_shared_verses'] %} class="poem-view-text"{% endif %}><small><i>{{ v.text_rendered | safe }}</i></small></td>
+      <td></td><td></td><td{%if args.show_shared_verses %} class="poem-view-text"{% endif %}><small><i>{{ v.text_rendered | safe }}</i></small></td>
       {% elif v.v_type == "K" %}
-      <td></td><td></td><td{%if args['show_shared_verses'] %} class="poem-view-text"{% endif %}><small>{{ v.text_rendered | safe }}</small></td>
+      <td></td><td></td><td{%if args.show_shared_verses %} class="poem-view-text"{% endif %}><small>{{ v.text_rendered | safe }}</small></td>
       {% elif v.v_type == "CPT" %}
-      <td></td><td></td><td{%if args['show_shared_verses'] %} class="poem-view-text"{% endif %} align="center">
+      <td></td><td></td><td{%if args.show_shared_verses %} class="poem-view-text"{% endif %} align="center">
         <h3>{{ v.text_rendered | safe }}</h3>
       </td>
       {% else %}
-      <td></td><td></td><td{%if args['show_shared_verses'] %} class="poem-view-text"{% endif %}>
+      <td></td><td></td><td{%if args.show_shared_verses %} class="poem-view-text"{% endif %}>
         <small style="color: gray;">{{ v.text_rendered | safe }}</small>
       </td>
       {% endif %}
     {% endif %}
     <td style="white-space: nowrap">
-    {% if args['show_shared_verses'] %}
+    {% if args.show_shared_verses %}
     {% for p2 in data['linked_poems'] %}
         {% if v.clust_id in data['verse_poems'] and p2 in data['verse_poems'][v.clust_id] %}
             <a href="/poemdiff?nro1={{ data['poem'].nro }}&nro2={{ p2 }}" class="c{{ loop.index % 13}}" title="{{ p2 }}">&nbsp;&nbsp;</a>
@@ -456,7 +456,7 @@ on sequences of verses.</p>
     for (const el of selected) {
       getTableCell(el).classList.remove('selected')
     }
-    window.open('/passage?nro={{ data['poem'].nro }}&start=' + selected[0].id + '&end=' + selected[selected.length - 1].id{% if args['clustering'] > 0 %}+ '&clustering={{ args['clustering'] }}'{% endif %},'_self')
+    window.open('/passage?nro={{ data['poem'].nro }}&start=' + selected[0].id + '&end=' + selected[selected.length - 1].id{% if args.clustering > 0 %}+ '&clustering={{ args.clustering }}'{% endif %},'_self')
   })
 
 $('#clear-selection').on('click', (e) => {

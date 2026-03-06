@@ -19,8 +19,8 @@ function properly.
 <li role="presentation"><a role="button" href="/" title="to index">
  <span class="glyphicon glyphicon-home"></span>
 </a></li>
-{% if args['source'] == "type" %}
-{% for t in data['types'][args['id']].ancestors | reverse %}
+{% if args.source == "type" %}
+{% for t in data['types'][args.id].ancestors | reverse %}
 <li role="presentation"><a role="button" href="/poemlist?source=type&id={{ t }}">
  <span class="glyphicon glyphicon-chevron-right"></span>
 {{ data['types'][t].name }}
@@ -47,7 +47,7 @@ function properly.
 </div>
 {% endif %}
 
-{% if args['source'] == "type" and data['tree'] %}
+{% if args.source == "type" and data['tree'] %}
 <div class="panel panel-primary">
 <div class="panel-heading"><h2 class="panel-title">Subcategories</h2></div>
 <div class="panel-body">
@@ -55,7 +55,7 @@ function properly.
 {{ line.prefix | join('\u2003') }} <a href="/poemlist?source=type&id={{ line.type_id }}">{{ data['types'][line.type_id].name }}</a><br/>
 {% endfor %}
 
-{% elif args['source'] == "place" and data['parishes'] %}
+{% elif args.source == "place" and data['parishes'] %}
 <div class="panel panel-primary">
 <div class="panel-heading"><h2 class="panel-title">Parishes ({{ data['parishes'] | length }})</h2></div>
 <div class="panel-body">
@@ -86,7 +86,7 @@ function properly.
   {% endif %}
   {% if links['types'] %}
   <li role="presentation"><a role="button" target="_blank" href="{{ links['types'] }}">
-   <span class="glyphicon glyphicon-th"></span> {% if args['rouces'] == "type" %}Co-occurring types{% else %}Type distribution{% endif %}
+   <span class="glyphicon glyphicon-th"></span> {% if args.source == "type" %}Co-occurring types{% else %}Type distribution{% endif %}
   </a></li>
   {% endif %}
 </ul>

@@ -5,7 +5,6 @@ import re
 from traceback import format_exception
 
 import config
-from data.poems import get_poem_by_id_or_title
 import view.clustnet
 import view.dendrogram
 import view.multidiff
@@ -57,97 +56,48 @@ def show_error(e):
     }
     return render_template('error.html', data=data)
 
-
 @application.route('/clustnet')
 def show_clustnet():
-    args = getargs(request, view.clustnet.DEFAULTS)
-    result = view.clustnet.render(**args)
-    return _compact(result)
-
+    return view.clustnet.render(**request.args)
 
 @application.route('/dendrogram')
 def show_dendrogram():
-    args = getargs(request, view.dendrogram.DEFAULTS)
-    result = view.dendrogram.render(**args)
-    return _compact(result)
-
+    return view.dendrogram.render(**request.args)
 
 @application.route('/passage')
 def show_passage():
-    args = getargs(request, view.passage.DEFAULTS)
-    result = view.passage.render(**args)
-    if args['format'] in ('csv', 'tsv'):
-        return Response(result, mimetype='text/plain')
-    else:
-        return _compact(result)
+    return view.passage.render(**request.args)
 
 @application.route('/poemdiff')
 @application.route('/runodiff')
 def show_diff():
-    args = getargs(request, view.poemdiff.DEFAULTS)
-    result = view.poemdiff.render(**args)
-    if args['format'] in ('csv', 'tsv'):
-        return Response(result, mimetype='text/plain')
-    else:
-        return _compact(result)
+    return view.poemdiff.render(**request.args)
 
 @application.route('/multidiff')
 def show_multidiff():
-    args = getargs(request, view.multidiff.DEFAULTS)
-    result = view.multidiff.render(**args)
-    if args['format'] in ('csv', 'tsv'):
-        return Response(result, mimetype='text/plain')
-    else:
-        return _compact(result)
+    return view.multidiff.render(**request.args)
 
 @application.route('/poem')
 @application.route('/runo')
 def show_poem():
-    args = getargs(request, view.poem.DEFAULTS)
-    result = view.poem.render(**args)
-    if args['format'] == 'txt':
-        return Response(result, mimetype='text/plain')
-    elif args['format'] == 'xml':
-        return Response(result, mimetype='text/xml')
-    else:
-        return _compact(result)
+    return view.poem.render(**request.args)
 
 @application.route('/poemlist')
 def show_poemlist():
-    args = getargs(request, view.poemlist.DEFAULTS)
-    result = view.poemlist.render(**args)
-    return _compact(result)
+    return view.poemlist.render(**request.args)
 
 @application.route('/poemnet')
 def show_poemnet():
-    args = getargs(request, view.poemnet.DEFAULTS)
-    result = view.poemnet.render(**args)
-    return _compact(result)
-
+    return view.poemnet.render(**request.args)
 
 @application.route('/verse')
 def show_verse():
-    args = getargs(request, view.verse.DEFAULTS)
-    result = view.verse.render(**args)
-    if args['format'] in ('csv', 'tsv'):
-        return Response(result, mimetype='text/plain')
-    else:
-        return _compact(result)
-
+    return view.verse.render(**request.args)
 
 @application.route('/search')
 @application.route('/')
 def show_search():
-    args = getargs(request, view.search.DEFAULTS)
-    # If a poem ID or title was entered in the search box -> redirect to the poem.
-    if args['q'] is not None:
-        with pymysql.connect(**config.MYSQL_PARAMS).cursor() as db:
-            nro = get_poem_by_id_or_title(db, args['q'])
-            if nro is not None:
-                return redirect('/poem?nro={}'.format(nro))
-    result = view.search.render(**args)
-    return _compact(result)
-
+    return view.search.render(**request.args)
 
 @application.route('/theme')
 @application.route('/type')

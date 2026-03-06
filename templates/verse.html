@@ -23,7 +23,7 @@ function properly.
 <div class="col-lg-8">
 
 <ul class="nav nav-pills">
-  <li role="presentation"><a role="button" href="/poem?nro={{ args['nro'] }}">
+  <li role="presentation"><a role="button" href="/poem?nro={{ args.nro }}">
    <span class="glyphicon glyphicon-chevron-left"></span> Back to poem
   </a></li>
 </ul>
@@ -57,8 +57,8 @@ verse similarity is measured in terms of the number of character bigrams
       Export as <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
-    <li role="presentation"><a href="/verse?nro={{ args['nro'] }}&pos={{ args['pos'] }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}&format=csv">CSV</a></li>
-    <li role="presentation"><a href="/verse?nro={{ args['nro'] }}&pos={{ args['pos'] }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}&format=tsv">TSV</a></li>
+    <li role="presentation"><a href="/verse?nro={{ args.nro }}&pos={{ args.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}&format=csv">CSV</a></li>
+    <li role="presentation"><a href="/verse?nro={{ args.nro }}&pos={{ args.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}&format=tsv">TSV</a></li>
     </ul>
   </li>
   {% if links['map'] %}
@@ -71,16 +71,16 @@ verse similarity is measured in terms of the number of character bigrams
    <span class="glyphicon glyphicon-th"></span> Type distribution
   </a></li>
   {% endif %}
-  <li role="presentation"><a role="button" href="/clustnet?nro={{ args['nro'] }}&pos={{ args['pos'] }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}">
+  <li role="presentation"><a role="button" href="/clustnet?nro={{ args.nro }}&pos={{ args.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}">
    <span class="glyphicon glyphicon-cloud"></span> Cluster network
   </a></li>
   <li role="presentation" class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-      Clustering: {{ data['clusterings'][args['clustering']][1] }} <span class="caret"></span>
+      Clustering: {{ data['clusterings'][args.clustering][1] }} <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
     {% for c in data['clusterings'] %}
-    <li role="presentation"><a href="/verse?nro={{ args['nro'] }}&pos={{ args['pos'] }}{% if c[0] > 0 %}&clustering={{ c[0] }}{% endif %}" title="{{ c[2] }}">{{ c[1] }}</a></li>
+    <li role="presentation"><a href="/verse?nro={{ args.nro }}&pos={{ args.pos }}{% if c[0] > 0 %}&clustering={{ c[0] }}{% endif %}" title="{{ c[2] }}">{{ c[1] }}</a></li>
     {% endfor %}
     </ul>
   </li>
@@ -96,7 +96,7 @@ verse similarity is measured in terms of the number of character bigrams
 </div>
 </div>
 <div class="row">
-<div class="col-md-4{% if nro == args['nro'] %} selected{% endif %}">
+<div class="col-md-4{% if nro == args.nro %} selected{% endif %}">
 <b><a href="/poem?nro={{ nro }}&hl={{ verses | map(attribute='pos') | join(',')  }}#{{ verses | map(attribute='pos') | min }}">
 {{ data['poems'][nro].smd.title }}
 </a></b>
@@ -138,7 +138,7 @@ verse similarity is measured in terms of the number of character bigrams
 <div class="col-md-12">
 <b>See also: </b>
 {% for v in data['nbclust'][nro] %}
-<small>#{{ v.clust_id }}</small> <a href="/verse?nro={{ v.nro }}&pos={{ v.pos }}{% if args['clustering'] > 0 %}&clustering={{ args['clustering'] }}{% endif %}">{{ v.text_norm }}</a> ({{ v.clust_freq }})
+<small>#{{ v.clust_id }}</small> <a href="/verse?nro={{ v.nro }}&pos={{ v.pos }}{% if args.clustering > 0 %}&clustering={{ args.clustering }}{% endif %}">{{ v.text_norm }}</a> ({{ v.clust_freq }})
 {% endfor %}
 </div>
 </div>

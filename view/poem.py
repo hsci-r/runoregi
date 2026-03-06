@@ -1,9 +1,11 @@
-from flask import render_template
+from flask import render_template, Response
 import lxml.etree as ET
 from operator import itemgetter
 import math
+from pydantic import BaseModel, BeforeValidator, Field
 import pymysql
 import re
+from typing import Annotated, List, Literal
 
 from collections import Counter, defaultdict
 
@@ -11,25 +13,35 @@ import config
 from data.logging import profile
 from data.poems import Poems
 from data.verses import get_clusterings, get_verses
-from utils import link, makecol, render_xml
+from utils import compact, link, makecol, render_xml, splitter
 
 
-DEFAULTS = {
-  'nro': None,
-  'format': 'html',
-  'sim_order': 'consecutive_rare',
-  'max_similar': 50,
-  'clustering': 0,
-  'hl': [],
-  'sim_thr': 1,
-  'show_shared_verses': False
-}
+class Args(BaseModel):
+    nro: str = Field(max_length=16)
+    hl: Annotated[
+        List[int],
+        BeforeValidator(splitter(',')),
+    ] = Field([], max_length=100)
+    clustering: int = 0
+    format: Literal["html", "txt", "xml"] = "html"
+
+    # arguments for the shared verses matrix
+    max_similar: int = Field(50, ge=0, le=200)
+    sim_thr: float = Field(1, ge=0, le=1)
+    show_shared_verses: bool = False
+    sim_order: Literal[
+        "consecutive_rare",
+        "consecutive",
+        "rare",
+        "any",
+    ] = "consecutive_rare"
+
 
 def generate_page_links(args, clusterings):
     global DEFAULTS
 
     def pagelink(**kwargs):
-        return link('poem', dict(args, **kwargs), DEFAULTS)
+        return link('poem', args.model_copy(update=kwargs))
 
     result = {
         '+show_shared_verses':
@@ -97,8 +109,9 @@ def get_shared_verses(db, poem, max, thr, order, clustering_id=0):
 
 
 @profile
-def render(**args):
-    p = Poems(nros=[args['nro']])
+def render(**kwargs):
+    args = Args.validate(kwargs)
+    p = Poems(nros=[args.nro])
     clusterings = None
     sim_poems, types = None, None
     verse_poems, linked_poems, poems_sharing_verses = None, None, None
@@ -110,31 +123,31 @@ def render(**args):
         p.get_refs(db)
         p.get_similar_poems(db, sim_thr=0.1, sim_onesided_thr=0.5)
         p.get_structured_metadata(db)
-        p.get_text(db, clustering_id=args['clustering'])
+        p.get_text(db, clustering_id=args.clustering)
         # poem types
         types = p.get_types(db)
         types.get_names(db)
         # get metadata for related poems (similar, duplicates etc.)
-        related_nros = list(set([x.nro for x in p[args['nro']].sim_poems] \
-                                + p[args['nro']].duplicates + p[args['nro']].parents))
+        related_nros = list(set([x.nro for x in p[args.nro].sim_poems] \
+                                + p[args.nro].duplicates + p[args.nro].parents))
         related = Poems(nros=related_nros)
         if related:
             related.get_structured_metadata(db)
         # get verse clusters for the matrix view
-        if args['show_shared_verses']:
+        if args.show_shared_verses:
             verse_poems, linked_poems, poems_sharing_verses = \
-                get_shared_verses(db, p[args['nro']], args['max_similar'],
-                                  args['sim_thr'], args['sim_order'],
-                                  args['clustering'])
+                get_shared_verses(db, p[args.nro], args.max_similar,
+                                  args.sim_thr, args.sim_order,
+                                  args.clustering)
 
     # render the XML-containing text
-    poem = p[args['nro']]
+    poem = p[args.nro]
     for v in poem.text:
         v.render_text(poem.refs)
 
     # render the XML in the raw metadata
-    for key, val in p[args['nro']].meta.items():
-        p[args['nro']].meta[key] = render_xml(val, poem.refs, tag=key)
+    for key, val in p[args.nro].meta.items():
+        p[args.nro].meta[key] = render_xml(val, poem.refs, tag=key)
 
     data = {
         'poem': poem,
@@ -157,6 +170,11 @@ def render(**args):
         'maintenance': config.check_maintenance()
     }
     links = generate_page_links(args, clusterings)
-    return render_template('poem.{}'.format(args['format']),
+    page = render_template('poem.{}'.format(args.format),
                            args=args, data=data, links=links)
-
+    if args.format == "xml":
+        return Response(compact(page), mimetype="text/xml")
+    elif args.format == "txt":
+        return Response(compact(page), mimetype="text/plain")
+    else:
+        return Response(compact(page))

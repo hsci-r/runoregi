@@ -1,1 +1,2 @@
-timeout = 1000
+timeout = 60
+loglevel = 'debug'

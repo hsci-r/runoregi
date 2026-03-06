@@ -53,6 +53,7 @@ def show_error(e):
     data = {
         'title': 'Unexpected error',
         'msg': 'An unexpected error occurred.',
+        'stacktrace': ''.join(format_exception(e)),
     }
     return render_template('error.html', data=data)
 

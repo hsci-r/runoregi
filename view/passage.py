@@ -9,6 +9,7 @@ from data.logging import profile
 from data.poems import Poems
 from data.verses import get_clusterings, get_verses
 from utils import compact, link, print_type_list, render_csv
+from view.dendrogram import ArgsFromPoemIDs as DendrogramArgs
 
 
 MAX_QUERY_LENGTH = None
@@ -29,7 +30,7 @@ def generate_page_links(args, clusterings):
     def pagelink(**kwargs):
         return link('passage', args.model_copy(update=kwargs))
 
-    map_args = dict(DEFAULTS, **args)
+    map_args = args.model_dump()
     map_args['format'] = 'csv'
     del map_args['context']
 
@@ -130,10 +131,12 @@ def render(**kwargs):
             delimiter='\t' if args.format == 'tsv' else ',')
         return Response(compact(page), mimetype="text/plain")
     else:
-        links = generate_page_links(args.dict(), clusterings)
+        links = generate_page_links(args, clusterings)
         links['dendrogram'] = link('dendrogram',
-            { 'source': 'nros', 'nro': ','.join(pas['nro'] for pas in passages) },
-            DENDROGRAM_DEFAULTS)
+            DendrogramArgs(
+                source="nros",
+                nro=','.join(pas['nro'] for pas in passages)
+        ))
         data = { 'passages': passages, 'poems': poems, 'types': types,
                  'clusterings': clusterings,
                  'maintenance': config.check_maintenance() }

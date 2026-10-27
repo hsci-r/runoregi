@@ -52,7 +52,11 @@ function properly.
 <div class="panel-heading"><h2 class="panel-title">Subcategories</h2></div>
 <div class="panel-body">
 {% for line in data['tree'] %}
-{{ line.prefix | join('\u2003') }} <a href="/poemlist?source=type&id={{ line.type_id }}">{{ data['types'][line.type_id].name }}</a><br/>
+{% if line.type_id in data['type_poem_counts'] %}
+{{ line.prefix | join('\u2003') }} <a href="/poemlist?source=type&id={{ line.type_id }}">{{ data['types'][line.type_id].name }}</a> ({{ data['type_poem_counts'][line.type_id] }})<br/>
+{% else %}
+{{ line.prefix | join('\u2003') }} <span style="color: gray;">{{ data['types'][line.type_id].name }}</span><br/>
+{% endif %}
 {% endfor %}
 
 {% elif args.source == "place" and data['parishes'] %}

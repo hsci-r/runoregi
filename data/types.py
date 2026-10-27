@@ -136,6 +136,20 @@ class Types:
                 nros.append(nro)
         return (nros, minor_nros) if minor else nros
 
+    def get_poem_counts(self, db):
+        if not self: return {}
+        if not config.TABLES['types'] or not config.TABLES['p_typ']:
+            return {}
+        db.execute(
+            'SELECT type_orig_id, p_id FROM p_typ NATURAL JOIN types '
+            'WHERE type_orig_id IN %s;', (tuple(self),))
+        poems = { t: set() for t in self }
+        for type_id, p_id in db.fetchall():
+            for t in [type_id] + (self[type_id].ancestors or []):
+                if t in poems:
+                    poems[t].add(p_id)
+        return { t: len(p) for t, p in poems.items() if p }
+
 
 def render_type_tree(types, minor_type_ids=None):
 

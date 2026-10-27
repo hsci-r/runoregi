@@ -33,6 +33,7 @@ def get_by_type(db, type_id):
     subcat.get_descriptions(db)
     subcat.get_descendents(db, add=True)
     subcat.get_names(db)
+    type_poem_counts = subcat.get_poem_counts(db)
 
     tree = render_type_tree(subcat)
     # remove the top hierarchy level from the tree
@@ -45,6 +46,7 @@ def get_by_type(db, type_id):
              'types': types,
              'minor': set(minor_nros), 
              'tree': tree,
+             'type_poem_counts': type_poem_counts,
              'title': types[type_id].name,
              'description': types[type_id].description
            }
